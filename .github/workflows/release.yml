@@ -49,33 +49,33 @@ jobs:
           echo "semver=${{ env.SEMVER }}" >> "$Env:GITHUB_OUTPUT"
           echo "file_version=${{ env.FILE_VERSION }}" >> "$Env:GITHUB_OUTPUT"
           
-#  deploy-installers:
-#    runs-on: ubuntu-latest
-#    needs: build-connectors
-#    env:
-#      IS_PUBLIC_RELEASE: ${{ github.ref_type == 'tag' }}
-#    steps:
-#      - name: 🔫 Trigger Build Installers
-#        uses: the-actions-org/workflow-dispatch@v4.0.0
-#        with:
-#          workflow: Build Installers
-#          repo: specklesystems/connector-installers
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          inputs: '{
-#            "run_id": "${{ github.run_id }}",
-#            "semver": "${{ needs.build-connectors.outputs.semver }}",
-#            "file_version": "${{ needs.build-connectors.outputs.file_version }}",
-#            "repo": "${{ github.repository }}",
-#            "is_public_release": ${{ env.IS_PUBLIC_RELEASE }}
-#            }'
-#          ref: jedd/cnx-1358-autocad-and-civil3d-installations-are-blocked-by-pre #todo: revert back to main before PR is merged
-#          wait-for-completion: true
-#          wait-for-completion-interval: 10s
-#          wait-for-completion-timeout: 10m
-#          display-workflow-run-url: true
-#          display-workflow-run-url-interval: 10s
-#      
-#      # Allows us to inspect the artifacts of failed builds, since this below step will be skipped if the above step fails
-#      - uses: geekyeggo/delete-artifact@v5
-#        with:
-#          name: output-*
+  deploy-installers:
+    runs-on: ubuntu-latest
+    needs: build-connectors
+    env:
+      IS_PUBLIC_RELEASE: ${{ github.ref_type == 'tag' }}
+    steps:
+      - name: 🔫 Trigger Build Installers
+        uses: the-actions-org/workflow-dispatch@v4.0.0
+        with:
+          workflow: Build Installers
+          repo: specklesystems/connector-installers
+          token: ${{ secrets.CONNECTORS_GH_TOKEN }}
+          inputs: '{
+            "run_id": "${{ github.run_id }}",
+            "semver": "${{ needs.build-connectors.outputs.semver }}",
+            "file_version": "${{ needs.build-connectors.outputs.file_version }}",
+            "repo": "${{ github.repository }}",
+            "is_public_release": ${{ env.IS_PUBLIC_RELEASE }}
+            }'
+          ref: jedd/cnx-1358-autocad-and-civil3d-installations-are-blocked-by-pre #todo: revert back to main before PR is merged
+          wait-for-completion: true
+          wait-for-completion-interval: 10s
+          wait-for-completion-timeout: 10m
+          display-workflow-run-url: true
+          display-workflow-run-url-interval: 10s
+      
+      # Allows us to inspect the artifacts of failed builds, since this below step will be skipped if the above step fails
+      - uses: geekyeggo/delete-artifact@v5
+        with:
+          name: output-*
