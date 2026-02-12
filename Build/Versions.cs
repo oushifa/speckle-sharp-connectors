@@ -1,4 +1,5 @@
 using Semver;
+using SimpleExec;
 using static SimpleExec.Command;
 
 namespace Build;
