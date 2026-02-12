@@ -154,7 +154,7 @@ public class ReceiveOperationManagerTests : MoqTest
       ModelCardId = "id4",
       ModelName = "Test",
       AccountId = "AccountId",
-      ServerUrl = "http://localhost",
+      ServerUrl = "http://192.168.31.151:8082",
       ProjectId = "ProjectId",
       ProjectName = "ProjectName",
       ModelId = "ModelId",
