@@ -1,4 +1,4 @@
-﻿using Semver;
+using Semver;
 using static SimpleExec.Command;
 
 namespace Build;
@@ -52,11 +52,19 @@ public static class Versions
 
   public static async Task<string> GetPreviousTag(string currentTag)
   {
-    //finds a tag starting with current tag and adds no abbrevation
-    var (lastTag, _) = await ReadAsync("git", $"describe --abbrev=0 --tags {currentTag}^");
-    lastTag = lastTag.Trim();
+    try
+    {
+      //finds a tag starting with current tag and adds no abbrevation
+      var (lastTag, _) = await ReadAsync("git", $"describe --abbrev=0 --tags {currentTag}^");
+      lastTag = lastTag.Trim();
 
-    return lastTag;
+      return lastTag;
+    }
+    catch (ExitCodeReadException)
+    {
+      Console.WriteLine($"Could not find previous tag for {currentTag}. Assuming no previous version.");
+      return string.Empty;
+    }
   }
 
   private static SemVersion? s_previousVersion;

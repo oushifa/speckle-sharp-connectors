@@ -85,6 +85,12 @@ public static class Affected
     var currentTag = await Versions.GetCurrentTag();
     var currentVersion = await Versions.ComputeVersion();
     var lastTag = await Versions.GetPreviousTag(currentTag);
+    if (string.IsNullOrEmpty(lastTag))
+    {
+      Console.WriteLine("No previous tag found, building all.");
+      s_affectedComputed = true;
+      return;
+    }
     var lastVersion = await Versions.ComputePreviousVersion(currentTag);
 
     Console.WriteLine($"Last tag: {lastTag}, Current tag: {currentTag}");
