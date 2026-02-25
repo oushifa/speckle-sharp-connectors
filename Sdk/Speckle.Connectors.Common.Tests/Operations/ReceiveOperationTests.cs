@@ -92,7 +92,7 @@ public class ReceiveOperationTests : MoqTest
 
     var @base = new TestBase();
     var token = "token";
-    var serverUrl = new Uri("https://192.168.31.151:8082");
+    var serverUrl = new Uri("http://47.100.77.97:64483");
     var projectId = "projectId";
     var account = new Account()
     {
