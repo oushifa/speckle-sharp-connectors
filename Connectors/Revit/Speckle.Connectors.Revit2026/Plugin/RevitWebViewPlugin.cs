@@ -72,7 +72,7 @@ internal sealed class RevitWebViewPlugin(
     );
     dui3Button.ToolTip = "Speckle for Revit";
     //dui3Button.AvailabilityClassName = typeof(CmdAvailabilityViews).FullName;
-    dui3Button.SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://speckle.systems"));
+    dui3Button.SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, ""));
   }
 
   private void OnApplicationInitialized(object? sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)

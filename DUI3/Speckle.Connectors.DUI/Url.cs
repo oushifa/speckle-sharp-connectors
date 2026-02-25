@@ -14,7 +14,7 @@ public static class Url
 {
   // public static readonly Uri Netlify = new("https://dui.speckle.systems/");
 
-  public static readonly Uri Netlify = new("http://192.168.31.151:8082/");
+  public static readonly Uri Netlify = new("http://47.100.77.97:64483/");
 
   // In CefSharp XAML file we cannot call ToString() function over URI
   public static readonly string NetlifyString = Netlify.ToString();
