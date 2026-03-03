@@ -103,6 +103,9 @@ public sealed partial class RevitControlWebView : UserControl, IBrowserScriptExe
       throw new InvalidOperationException("Webview Failed to initialize", e.InitializationException);
     }
 
+    _browser.CoreWebView2.Settings.AreDevToolsEnabled = true;
+    _browser.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+
     // We use Lazy here to delay creating the binding until after the Browser is fully initialized.
     // Otherwise the Browser cannot respond to any requests to ExecuteScriptAsyncMethod
     foreach (var binding in _serviceProvider.GetRequiredService<IEnumerable<IBinding>>())

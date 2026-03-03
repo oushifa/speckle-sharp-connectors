@@ -67,6 +67,9 @@ public sealed partial class DUI3ControlWebView : UserControl, IBrowserScriptExec
       throw new InvalidOperationException("Webview Failed to initialize", e.InitializationException);
     }
 
+    Browser.CoreWebView2.Settings.AreDevToolsEnabled = true;
+    Browser.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+
     // We use Lazy here to delay creating the binding until after the Browser is fully initialized.
     // Otherwise the Browser cannot respond to any requests to ExecuteScriptAsyncMethod
     foreach (var binding in _serviceProvider.GetRequiredService<IEnumerable<IBinding>>())
