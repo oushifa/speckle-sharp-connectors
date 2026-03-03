@@ -1,4 +1,5 @@
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Autodesk.Revit.UI;
 using CefSharp;
@@ -11,6 +12,7 @@ public partial class CefSharpPanel : Page, Autodesk.Revit.UI.IDockablePaneProvid
   public CefSharpPanel()
   {
     InitializeComponent();
+    Browser.PreviewKeyDown += OnBrowserPreviewKeyDown;
   }
 
   /// <inheritdoc/>
@@ -60,7 +62,37 @@ public partial class CefSharpPanel : Page, Autodesk.Revit.UI.IDockablePaneProvid
   public bool IsBrowserInitialized => Browser.IsBrowserInitialized;
   public object BrowserElement => Browser;
 
-  public void ShowDevTools() => Browser.ShowDevTools();
+  public void ShowDevTools()
+  {
+    if (!Browser.CheckAccess())
+    {
+      Browser.Dispatcher.Invoke(() => ShowDevTools(), DispatcherPriority.Background);
+      return;
+    }
+
+    if (!Browser.IsBrowserInitialized || Browser.GetBrowser() is null)
+    {
+      return;
+    }
+
+    Browser.ShowDevTools();
+  }
+
+  private void OnBrowserPreviewKeyDown(object sender, KeyEventArgs e)
+  {
+    bool isF12 = e.Key == Key.F12;
+    bool isCtrlShiftI =
+      e.Key == Key.I
+      && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)
+      && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+    if (!isF12 && !isCtrlShiftI)
+    {
+      return;
+    }
+
+    ShowDevTools();
+    e.Handled = true;
+  }
 
   public void SetupDockablePane(Autodesk.Revit.UI.DockablePaneProviderData data)
   {
