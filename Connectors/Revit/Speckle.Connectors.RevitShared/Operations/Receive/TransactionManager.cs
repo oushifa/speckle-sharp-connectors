@@ -30,7 +30,7 @@ public sealed class TransactionManager : ITransactionManager
 #pragma warning restore CA2213 // Disposable fields should be disposed
 
   // POC find a better way to use IFailuresPreprocessor
-  public void StartTransaction(bool enableFailurePreprocessor = false, string name = "Speckle Transaction")
+  public void StartTransaction(bool enableFailurePreprocessor = false, string name = "数智南北 Transaction")
   {
     if (_transaction == null || !_transaction.IsValidObject || _transaction.GetStatus() != TransactionStatus.Started)
     {
