@@ -157,11 +157,7 @@ internal sealed class RevitCefPlugin : IRevitPlugin
 
     // Registering dockable pane should happen before UiApplication is initialized with RevitTask.
     // Otherwise pane cannot be registered for double-click file open.
-    _uIControlledApplication.RegisterDockablePane(
-      RevitExternalApplication.DockablePanelId,
-      "数智南北",
-      _cefSharpPanel
-    );
+    _uIControlledApplication.RegisterDockablePane(RevitExternalApplication.DockablePanelId, "数智南北", _cefSharpPanel);
   }
 
   private ImageSource? LoadPngImgSource(string sourceName, string path)
