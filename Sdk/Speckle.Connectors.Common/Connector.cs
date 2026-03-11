@@ -20,8 +20,8 @@ public static class Connector
     }
   }
 
-  public static readonly string TabName = "Speckle";
-  public static readonly string TabTitle = "Speckle";
+  public static readonly string TabName = "数智南北";
+  public static readonly string TabTitle = "数智南北";
 
   public static IDisposable Initialize(
     this IServiceCollection serviceCollection,
