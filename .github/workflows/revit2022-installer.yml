@@ -88,8 +88,10 @@ jobs:
 
           $version = "0.0.${{ github.run_number }}"
           $sourceRoot = Join-Path $env:GITHUB_WORKSPACE "installer\stage\Addins2022"
+          $outputDir = Join-Path $env:GITHUB_WORKSPACE "installer\out"
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 
-          & $iscc "installer\Revit2022.iss" /DMyAppVersion="$version" /DSourceRoot="$sourceRoot"
+          & $iscc "Build\setup\revit2022.iss" /O"$outputDir" /F"Speckle-Revit2022-Setup-$version" /DMyAppVersion="$version" /DSourceRoot="$sourceRoot"
 
       - name: Upload setup.exe
         uses: actions/upload-artifact@v4
