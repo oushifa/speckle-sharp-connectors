@@ -1,5 +1,9 @@
-#define MyAppVersion GetStringParam("MyAppVersion", "0.0.0")
-#define SourceRoot GetStringParam("SourceRoot", "")
+#ifndef MyAppVersion
+  #define MyAppVersion "0.0.0"
+#endif
+#ifndef SourceRoot
+  #define SourceRoot ""
+#endif
 
 [Setup]
 AppId={{A7E2C34F-0A51-4F3B-9A3B-7F8B5B8E3B2D}
