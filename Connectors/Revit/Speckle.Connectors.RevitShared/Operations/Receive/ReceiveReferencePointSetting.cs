@@ -10,7 +10,7 @@ public class ReceiveReferencePointSetting(ReceiveReferencePointType value = Rece
   public const ReceiveReferencePointType DEFAULT_VALUE = ReceiveReferencePointType.Source;
 
   public string? Id { get; set; } = SETTING_ID;
-  public string? Title { get; set; } = "Reference Point";
+  public string? Title { get; set; } = "参考点类型";
   public string? Type { get; set; } = "string";
   public List<string>? Enum { get; set; } = System.Enum.GetNames(typeof(ReceiveReferencePointType)).ToList();
   public object? Value { get; set; } = value.ToString();

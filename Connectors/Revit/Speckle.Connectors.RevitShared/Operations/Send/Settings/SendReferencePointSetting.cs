@@ -10,7 +10,7 @@ public class SendReferencePointSetting(ReferencePointType value = SendReferenceP
   public const ReferencePointType DEFAULT_VALUE = ReferencePointType.InternalOrigin;
 
   public string? Id { get; set; } = SETTING_ID;
-  public string? Title { get; set; } = "Reference Point";
+  public string? Title { get; set; } = "参考点类型";
   public string? Type { get; set; } = "string";
   public List<string>? Enum { get; set; } = System.Enum.GetNames(typeof(ReferencePointType)).ToList();
   public object? Value { get; set; } = value.ToString();

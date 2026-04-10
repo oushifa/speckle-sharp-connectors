@@ -9,7 +9,7 @@ public class SendParameterNullOrEmptyStringsSetting(bool value = SendParameterNu
   public const bool DEFAULT_VALUE = false;
 
   public string? Id { get; set; } = SETTING_ID;
-  public string? Title { get; set; } = "Send null/empty parameters";
+  public string? Title { get; set; } = "是否发送空/空参数字符串";
   public string? Type { get; set; } = "boolean";
   public List<string>? Enum { get; set; }
   public object? Value { get; set; } = value;

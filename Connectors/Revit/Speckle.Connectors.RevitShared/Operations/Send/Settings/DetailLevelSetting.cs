@@ -9,7 +9,7 @@ public class DetailLevelSetting(DetailLevelType value = DetailLevelSetting.DEFAU
   public const DetailLevelType DEFAULT_VALUE = DetailLevelType.Medium;
 
   public string? Id { get; set; } = SETTING_ID;
-  public string? Title { get; set; } = "Detail Level";
+  public string? Title { get; set; } = "数据详细等级";
   public string? Type { get; set; } = "string";
   public List<string>? Enum { get; set; } = System.Enum.GetNames(typeof(DetailLevelType)).ToList();
   public object? Value { get; set; } = value.ToString();

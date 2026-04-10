@@ -8,7 +8,7 @@ public class SendAreasAsMeshSetting(bool value = SendAreasAsMeshSetting.DEFAULT_
   public const bool DEFAULT_VALUE = false;
 
   public string? Id { get; set; } = SETTING_ID;
-  public string? Title { get; set; } = "Send Areas As Mesh";
+  public string? Title { get; set; } = "是否发送区域作为网格";
   public string? Type { get; set; } = "boolean";
   public object? Value { get; set; } = value;
   public List<string>? Enum { get; set; }
