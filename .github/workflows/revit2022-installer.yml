@@ -1,0 +1,65 @@
+name: Build Revit 2022 setup.exe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.4xx
+
+      - name: Build Revit 2022 (Release)
+        shell: pwsh
+        run: |
+          dotnet build "Connectors\Revit\Speckle.Connectors.Revit2022\Speckle.Connectors.Revit2022.csproj" -c Release
+
+      - name: Stage files for installer
+        shell: pwsh
+        run: |
+          $buildOut = Join-Path $env:GITHUB_WORKSPACE "Connectors\Revit\Speckle.Connectors.Revit2022\bin\Release\net48"
+          if (!(Test-Path $buildOut)) { throw "Build output not found: $buildOut" }
+
+          $stageRoot = Join-Path $env:GITHUB_WORKSPACE "installer\stage\Addins2022"
+          $destFolder = Join-Path $stageRoot "Speckle.Connectors.Revit2022"
+
+          New-Item -ItemType Directory -Force -Path $destFolder | Out-Null
+
+          Copy-Item -Recurse -Force (Join-Path $buildOut "*") $destFolder
+
+          $addinSource = Join-Path $buildOut "Plugin\Speckle.Connectors.Revit2022.addin"
+          if (!(Test-Path $addinSource)) { throw "Addin file not found: $addinSource" }
+
+          Copy-Item -Force $addinSource (Join-Path $stageRoot "Speckle.Connectors.Revit2022.addin")
+
+          $pluginDir = Join-Path $destFolder "Plugin"
+          if (Test-Path $pluginDir) { Remove-Item -Recurse -Force $pluginDir }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+
+      - name: Build setup.exe
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { throw "ISCC.exe not found at $iscc" }
+
+          $version = "0.0.${{ github.run_number }}"
+          $sourceRoot = Join-Path $env:GITHUB_WORKSPACE "installer\stage\Addins2022"
+
+          & $iscc "installer\Revit2022.iss" /DMyAppVersion="$version" /DSourceRoot="$sourceRoot"
+
+      - name: Upload setup.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: revit2022-setup
+          path: installer/out/*.exe
+          if-no-files-found: error
