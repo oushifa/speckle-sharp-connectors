@@ -10,6 +10,7 @@ using Speckle.Connectors.DUI.Logging;
 using Speckle.Connectors.DUI.Models;
 using Speckle.Connectors.DUI.Models.Card;
 using Speckle.Connectors.Revit.HostApp;
+using Speckle.Sdk;
 using Speckle.Sdk.Api;
 using Speckle.Sdk.Common;
 using Speckle.Sdk.Credentials;
@@ -35,7 +36,7 @@ public interface IRevitMultiSendOrchestrator
 }
 
 /// <summary>
-/// 实现 <see cref="IRevitMultiSendOrchestrator"/>：各发送车道经 <see cref="Task.WhenAll"/> 并行。
+/// 实现 <see cref="IRevitMultiSendOrchestrator"/>：各发送车道并行执行。
 /// Speckle 模型车道成功与否仍决定是否调用 <see cref="ISendBindingUICommands.SetModelSendResult"/>。
 /// </summary>
 internal sealed class RevitMultiSendOrchestrator(
@@ -93,7 +94,7 @@ internal sealed class RevitMultiSendOrchestrator(
         commands.Bridge,
         modelCardId,
         ct,
-        RevitMultiSendTaskIds.SpeckleModel
+        RevitMultiSendTaskIds.SPECKLE_MODEL
       );
 
       try
@@ -111,13 +112,13 @@ internal sealed class RevitMultiSendOrchestrator(
         speckleModelResult = sendResult;
         versionId = vId;
         lanes.Add(
-          new SendLaneResult(RevitMultiSendTaskIds.SpeckleModel, true, $"version={vId}", null)
+          new SendLaneResult(RevitMultiSendTaskIds.SPECKLE_MODEL, true, $"version={vId}", null)
         );
 
         operationProgressManager.SetModelTaskProgress(
           commands.Bridge,
           modelCardId,
-          RevitMultiSendTaskIds.SpeckleModel,
+          RevitMultiSendTaskIds.SPECKLE_MODEL,
           "Speckle 模型发送完成",
           1,
           ct,
@@ -128,17 +129,17 @@ internal sealed class RevitMultiSendOrchestrator(
       {
         speckleCancelled = true;
       }
-      catch (Exception ex)
+      catch (Exception ex) when (!ex.IsFatal())
       {
         logger.LogModelCardHandledError(ex);
         speckleError = ex;
         lanes.Add(
-          new SendLaneResult(RevitMultiSendTaskIds.SpeckleModel, false, null, ex.ToFormattedString())
+          new SendLaneResult(RevitMultiSendTaskIds.SPECKLE_MODEL, false, null, ex.ToFormattedString())
         );
         operationProgressManager.SetModelTaskProgress(
           commands.Bridge,
           modelCardId,
-          RevitMultiSendTaskIds.SpeckleModel,
+          RevitMultiSendTaskIds.SPECKLE_MODEL,
           $"失败: {ex.Message}",
           null,
           ct,
@@ -154,7 +155,7 @@ internal sealed class RevitMultiSendOrchestrator(
         operationProgressManager.SetModelTaskProgress(
           commands.Bridge,
           modelCardId,
-          RevitMultiSendTaskIds.SpeckleRvtFile,
+          RevitMultiSendTaskIds.SPECKLE_RVT_FILE,
           "Speckle RVT 上传准备中",
           0,
           ct,
@@ -166,7 +167,7 @@ internal sealed class RevitMultiSendOrchestrator(
           operationProgressManager.SetModelTaskProgress(
             commands.Bridge,
             modelCardId,
-            RevitMultiSendTaskIds.SpeckleRvtFile,
+            RevitMultiSendTaskIds.SPECKLE_RVT_FILE,
             "Speckle RVT 上传中",
             r,
             ct
@@ -184,11 +185,11 @@ internal sealed class RevitMultiSendOrchestrator(
           )
           .ConfigureAwait(false);
 
-        lanes.Add(new SendLaneResult(RevitMultiSendTaskIds.SpeckleRvtFile, true, detail, null));
+        lanes.Add(new SendLaneResult(RevitMultiSendTaskIds.SPECKLE_RVT_FILE, true, detail, null));
         operationProgressManager.SetModelTaskProgress(
           commands.Bridge,
           modelCardId,
-          RevitMultiSendTaskIds.SpeckleRvtFile,
+          RevitMultiSendTaskIds.SPECKLE_RVT_FILE,
           "Speckle RVT 上传完成",
           1,
           ct,
@@ -196,16 +197,16 @@ internal sealed class RevitMultiSendOrchestrator(
         );
       }
       catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
-      catch (Exception ex)
+      catch (Exception ex) when (!ex.IsFatal())
       {
         logger.LogWarning(ex, "Speckle RVT 文件上传失败");
         lanes.Add(
-          new SendLaneResult(RevitMultiSendTaskIds.SpeckleRvtFile, false, null, ex.ToFormattedString())
+          new SendLaneResult(RevitMultiSendTaskIds.SPECKLE_RVT_FILE, false, null, ex.ToFormattedString())
         );
         operationProgressManager.SetModelTaskProgress(
           commands.Bridge,
           modelCardId,
-          RevitMultiSendTaskIds.SpeckleRvtFile,
+          RevitMultiSendTaskIds.SPECKLE_RVT_FILE,
           $"失败: {ex.Message}",
           null,
           ct,
