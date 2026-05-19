@@ -89,7 +89,12 @@ internal sealed class RevitMultiSendOrchestrator(
     async Task LaneSpeckleModelAsync()
     {
       // 勿使用 BCL Progress{T}：会按 SyncContext Post，Revit 主线程 BuildSync 期间进度与 DUI 更新被推迟。
-      var composite = operationProgressManager.CreateOperationProgressEventHandler(commands.Bridge, modelCardId, ct);
+      var composite = operationProgressManager.CreateOperationProgressEventHandler(
+        commands.Bridge,
+        modelCardId,
+        ct,
+        RevitMultiSendTaskIds.SpeckleModel
+      );
 
       try
       {

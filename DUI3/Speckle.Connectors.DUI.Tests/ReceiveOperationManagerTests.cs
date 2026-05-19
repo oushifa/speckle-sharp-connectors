@@ -97,7 +97,12 @@ public class ReceiveOperationManagerTests : MoqTest
     var progressHandler = Create<IProgress<CardProgress>>();
     _progressManagerMock
       .Setup(x =>
-        x.CreateOperationProgressEventHandler(It.IsAny<IBrowserBridge>(), "id2", It.IsAny<CancellationToken>())
+        x.CreateOperationProgressEventHandler(
+          It.IsAny<IBrowserBridge>(),
+          "id2",
+          It.IsAny<CancellationToken>(),
+          null
+        )
       )
       .Returns(progressHandler.Object);
 
@@ -129,7 +134,9 @@ public class ReceiveOperationManagerTests : MoqTest
 
     var progressHandler = Create<IProgress<CardProgress>>();
     _progressManagerMock
-      .Setup(x => x.CreateOperationProgressEventHandler(bridge.Object, "id3", It.IsAny<CancellationToken>()))
+      .Setup(x =>
+        x.CreateOperationProgressEventHandler(bridge.Object, "id3", It.IsAny<CancellationToken>(), null)
+      )
       .Returns(progressHandler.Object);
 
     var receiveOp = Create<IReceiveOperation>();
@@ -179,7 +186,12 @@ public class ReceiveOperationManagerTests : MoqTest
     var progressHandler = Create<IProgress<CardProgress>>();
     _progressManagerMock
       .Setup(x =>
-        x.CreateOperationProgressEventHandler(It.IsAny<IBrowserBridge>(), "id4", It.IsAny<CancellationToken>())
+        x.CreateOperationProgressEventHandler(
+          It.IsAny<IBrowserBridge>(),
+          "id4",
+          It.IsAny<CancellationToken>(),
+          null
+        )
       )
       .Returns(progressHandler.Object);
 

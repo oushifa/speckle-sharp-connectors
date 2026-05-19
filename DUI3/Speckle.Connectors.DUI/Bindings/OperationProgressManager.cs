@@ -41,11 +41,16 @@ public class OperationProgressManager : IOperationProgressManager
   /// <param name="bridge">当前连接器绑定的浏览器桥。</param>
   /// <param name="modelCardId">发送卡片 ID。</param>
   /// <param name="cancellationToken">取消后不再上报。</param>
+  /// <param name="mirrorTaskId">
+  /// 若指定，则每次 <c>Report</c> 除 <see cref="SetModelProgress"/> 外，还以相同 <c>status</c>/<c>progress</c> 调用
+  /// <see cref="SetModelTaskProgress"/>，供多次并行发送时按车道展示与单通道一致的中间过程（如 Converting）。
+  /// </param>
   /// <returns>可在后台线程反复 <c>Report</c> 的进度适配器。</returns>
   public IProgress<CardProgress> CreateOperationProgressEventHandler(
     IBrowserBridge bridge,
     string modelCardId,
-    CancellationToken cancellationToken
+    CancellationToken cancellationToken,
+    string? mirrorTaskId = null
   )
   {
     var progress = new NonUIThreadProgress<CardProgress>(args =>
@@ -56,6 +61,18 @@ public class OperationProgressManager : IOperationProgressManager
         new ModelCardProgress(modelCardId, args.Status, args.Progress),
         cancellationToken
       );
+
+      if (mirrorTaskId is not null)
+      {
+        SetModelTaskProgress(
+          bridge,
+          modelCardId,
+          mirrorTaskId,
+          args.Status,
+          args.Progress,
+          cancellationToken
+        );
+      }
     });
     return progress;
   }
