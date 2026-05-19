@@ -1,5 +1,9 @@
 **/bin/*
 **/obj/*
+
+# 本地 MSBuild 覆盖（如 TreatWarningsAsErrors）
+Directory.Build.props.user
+
 _ReSharper.SharpCompress/
 bin/
 *.suo

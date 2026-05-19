@@ -1,5 +1,6 @@
 using Speckle.Connectors.Common.Conversion;
 using Speckle.Connectors.DUI.Bridge;
+using Speckle.Connectors.DUI.Models;
 
 namespace Speckle.Connectors.DUI.Bindings;
 
@@ -11,6 +12,7 @@ public class SendBindingUICommands(IBrowserBridge bridge)
   private const string REFRESH_SEND_FILTERS_UI_COMMAND_NAME = "refreshSendFilters";
   private const string SET_MODELS_EXPIRED_UI_COMMAND_NAME = "setModelsExpired";
   private const string SET_MODEL_SEND_RESULT_UI_COMMAND_NAME = "setModelSendResult";
+  private const string SET_MODEL_SEND_LANE_RESULTS_UI_COMMAND_NAME = "setModelSendLaneResults";
   private const string SET_ID_MAP_COMMAND_NAME = "setIdMap";
 
   // POC.. the only reasons this needs the bridge is to send? realtionship to these messages and the bridge is unclear
@@ -48,4 +50,8 @@ public class SendBindingUICommands(IBrowserBridge bridge)
         sendConversionResults
       }
     );
+
+  /// <inheritdoc cref="ISendBindingUICommands.SetModelSendLaneResults"/>
+  public async Task SetModelSendLaneResults(string modelCardId, IReadOnlyList<SendLaneResult> laneResults) =>
+    await Bridge.Send(SET_MODEL_SEND_LANE_RESULTS_UI_COMMAND_NAME, new { modelCardId, laneResults });
 }

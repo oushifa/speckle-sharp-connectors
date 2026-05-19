@@ -12,6 +12,7 @@ using Speckle.Connectors.DUI.Models.Card;
 using Speckle.Connectors.DUI.Models.Card.SendFilter;
 using Speckle.Connectors.DUI.Settings;
 using Speckle.Connectors.Revit.HostApp;
+using Speckle.Connectors.Revit.Operations.Send;
 using Speckle.Connectors.Revit.Operations.Send.Settings;
 using Speckle.Connectors.Revit.Plugin;
 using Speckle.Connectors.RevitShared.Operations.Send.Filters;
@@ -38,7 +39,7 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
   private readonly ITopLevelExceptionHandler _topLevelExceptionHandler;
   private readonly LinkedModelHandler _linkedModelHandler;
   private readonly IThreadContext _threadContext;
-  private readonly ISendOperationManagerFactory _sendOperationManagerFactory;
+  private readonly IRevitMultiSendOrchestrator _revitMultiSendOrchestrator;
   private bool _isDocChangedSubscribed;
   private EventHandler<Autodesk.Revit.DB.Events.DocumentChangedEventArgs>? _documentChangedHandler;
   private readonly ConnectorConfig _config;
@@ -51,6 +52,8 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
   /// </summary>
   private ConcurrentHashSet<ElementId> ChangedObjectIds { get; set; } = new();
 
+  /// <summary>构造 Revit 发送绑定；通过 <paramref name="revitMultiSendOrchestrator"/> 执行多次并行上传编排。</summary>
+  /// <param name="revitMultiSendOrchestrator">多次并行发送：Speckle 模型车道与 Speckle RVT FileImport 等。</param>
   public RevitSendBinding(
     RevitIdleManager revitIdleManager,
     RevitContext revitContext,
@@ -66,7 +69,7 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
     LinkedModelHandler linkedModelHandler,
     IThreadContext threadContext,
     IRevitTask revitTask,
-    ISendOperationManagerFactory sendOperationManagerFactory,
+    IRevitMultiSendOrchestrator revitMultiSendOrchestrator,
     IConfigStore configStore
   )
     : base("sendBinding", bridge)
@@ -83,7 +86,7 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
     _topLevelExceptionHandler = topLevelExceptionHandler;
     _linkedModelHandler = linkedModelHandler;
     _threadContext = threadContext;
-    _sendOperationManagerFactory = sendOperationManagerFactory;
+    _revitMultiSendOrchestrator = revitMultiSendOrchestrator;
     _config = configStore.GetConnectorConfig();
 
     Commands = new SendBindingUICommands(bridge);
@@ -165,6 +168,10 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
 
   public SendBindingUICommands Commands { get; }
 
+  /// <summary>
+  /// 执行发送：先做 <see cref="RevitDocumentSendGate"/>，再委派 <see cref="IRevitMultiSendOrchestrator.RunMultiSendAsync"/>（多次并行）。
+  /// </summary>
+  /// <param name="modelCardId">待发发送卡片。</param>
   public async Task Send(string modelCardId)
   {
     var document = _revitContext.UIApplication?.ActiveUIDocument?.Document;
@@ -172,11 +179,30 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
     {
       throw new SpeckleException("No document is active for sending.");
     }
-    using var manager = _sendOperationManagerFactory.Create();
+
+    try
+    {
+      await _threadContext.RunOnMainAsync(() =>
+      {
+        RevitDocumentSendGate.EnsureDocumentReadyForSend(document);
+        return Task.CompletedTask;
+      });
+    }
+    catch (SpeckleException ex)
+    {
+      await Commands.SetModelError(modelCardId, ex);
+      return;
+    }
+
     var (fileName, fileBytes) = GetFileInfo(document);
-    await manager.Process<DocumentToConvert>(
+
+    // 文件名/大小写入 Speckle ingestion 侧元数据；绝对路径流入两条「文件上传」并行线。
+    await _revitMultiSendOrchestrator.RunMultiSendAsync(
       Commands,
       modelCardId,
+      document.PathName,
+      fileName,
+      fileBytes,
       (sp, card) =>
       {
         sp.GetRequiredService<IConverterSettingsStore<RevitConversionSettings>>()
@@ -191,12 +217,11 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
             )
           );
       },
-      async x => await RefreshElementsIdsOnSender(document, x.NotNull()),
-      fileName: fileName,
-      fileSizeBytes: fileBytes
+      async x => await RefreshElementsIdsOnSender(document, x.NotNull())
     );
   }
 
+  /// <summary>从 <see cref="Document.PathName"/> 推断展示名与长度（磁盘不存在则仅截取路径末段）。</summary>
   private static (string? fileName, long? fileBytes) GetFileInfo(Document document)
   {
     string fullPath = document.PathName;

@@ -47,6 +47,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\Filters\RevitSelectionFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\Filters\RevitViewsFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\RevitRootObjectBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\RevitDocumentSendGate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\RevitMultiSendOrchestrator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\RevitMultiSendTaskIds.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\SpeckleProjectFileUploader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\Settings\LinkedModelsSetting.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\Settings\SendParameterNullOrEmptyStringsSetting.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\Send\Settings\SendAreasAsMeshSetting.cs" />

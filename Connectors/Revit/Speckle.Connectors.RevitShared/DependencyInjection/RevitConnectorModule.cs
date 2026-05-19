@@ -79,8 +79,10 @@ public static class ServiceRegistration
     serviceCollection.AddSingleton(DefaultTraversal.CreateTraversalFunc());
     serviceCollection.AddScoped<LocalToGlobalConverterUtils>();
 
-    // operation progress manager
+    // Revit 多次并行发送：共用 OperationProgressManager 向 DUI 打双通道进度（aggregate + per-task）。
     serviceCollection.AddSingleton<IOperationProgressManager, OperationProgressManager>();
+    serviceCollection.AddSingleton<SpeckleProjectFileUploader>();
+    serviceCollection.AddSingleton<IRevitMultiSendOrchestrator, RevitMultiSendOrchestrator>();
   }
 
   public static void RegisterUiDependencies(IServiceCollection serviceCollection)
