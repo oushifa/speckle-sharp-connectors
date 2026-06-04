@@ -3,6 +3,12 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
     <Configurations>Debug;Release;Local</Configurations>
+    <!-- GHSA-4625-4j76-fww9 (CVE-2026-42191): only exploitable via the opt-in experimental
+         OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk feature, which this connector does not enable.
+         The fix (exporter 1.15.3) pulls Microsoft.Extensions 10.0.0, which ILRepack cannot merge
+         for net48 (Revit 2022). Keep the audit finding visible but non-blocking until a compatible
+         upgrade path exists. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1902</WarningsNotAsErrors>
   </PropertyGroup>
   <PropertyGroup>
     <PolySharpExcludeGeneratedTypes>System.Range;System.Index</PolySharpExcludeGeneratedTypes>
