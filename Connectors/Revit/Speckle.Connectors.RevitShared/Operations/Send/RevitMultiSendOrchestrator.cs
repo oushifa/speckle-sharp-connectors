@@ -22,7 +22,8 @@ namespace Speckle.Connectors.Revit.Operations.Send;
 public interface IRevitMultiSendOrchestrator
 {
   /// <summary>
-  /// 多次并行发送（当前为 Speckle 模型 + RVT 两路）；单路异常或失败不打断其余通道（用户取消仍通过共享 CancellationToken 统一中止）。
+  /// 多次发送（Speckle 模型 + RVT 两路）；RVT 绑定上传在模型车道成功并拿到 versionId 之后执行。
+  /// 单路异常或失败不打断其余通道（用户取消仍通过共享 CancellationToken 统一中止）。
   /// </summary>
   Task RunMultiSendAsync(
     ISendBindingUICommands commands,
@@ -36,7 +37,7 @@ public interface IRevitMultiSendOrchestrator
 }
 
 /// <summary>
-/// 实现 <see cref="IRevitMultiSendOrchestrator"/>：各发送车道并行执行。
+/// 实现 <see cref="IRevitMultiSendOrchestrator"/>：先执行 Speckle 模型车道，成功后再执行 RVT bind-file 上传。
 /// Speckle 模型车道成功与否仍决定是否调用 <see cref="ISendBindingUICommands.SetModelSendResult"/>。
 /// </summary>
 internal sealed class RevitMultiSendOrchestrator(
@@ -148,7 +149,7 @@ internal sealed class RevitMultiSendOrchestrator(
       }
     }
 
-    async Task LaneSpeckleRvtFileAsync()
+    async Task LaneSpeckleRvtFileAsync(string bindVersionId)
     {
       try
       {
@@ -175,10 +176,11 @@ internal sealed class RevitMultiSendOrchestrator(
         });
 
         var detail = await speckleProjectFileUploader
-          .UploadRvtAsync(
-            sendInfo.Client,
+          .BindRvtFileAsync(
+            sendInfo.Account.serverInfo.url,
+            sendInfo.Account.token,
             sendInfo.ProjectId,
-            sendInfo.ModelId,
+            bindVersionId,
             rvtAbsolutePath,
             normalized,
             ct
@@ -215,7 +217,12 @@ internal sealed class RevitMultiSendOrchestrator(
       }
     }
 
-    await Task.WhenAll(LaneSpeckleModelAsync(), LaneSpeckleRvtFileAsync()).ConfigureAwait(false);
+    await LaneSpeckleModelAsync().ConfigureAwait(false);
+
+    if (!speckleCancelled && speckleError is null && versionId is not null)
+    {
+      await LaneSpeckleRvtFileAsync(versionId).ConfigureAwait(false);
+    }
 
     await commands.SetModelSendLaneResults(modelCardId, lanes.ToArray()).ConfigureAwait(false);
 

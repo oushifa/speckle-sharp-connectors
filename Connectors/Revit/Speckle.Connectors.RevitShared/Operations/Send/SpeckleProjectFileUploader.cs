@@ -1,17 +1,102 @@
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Speckle.Sdk.Api;
-using Speckle.Sdk.Api.GraphQL.Inputs;
-using Speckle.Sdk.Transports;
 
 namespace Speckle.Connectors.Revit.Operations.Send;
 
 /// <summary>
-/// 将磁盘上的 Revit *.rvt 上传至 Speckle（预签名 URL → PUT）。
-/// 完成上传后触发 <see cref="StartFileImportInput"/>；与 Speckle 文档中的「上传 IFC 及其他文件」流程一致。
+/// 将磁盘上的 Revit *.rvt 绑定到已存在的 Speckle 版本（Commit）上。
 /// </summary>
 public sealed class SpeckleProjectFileUploader(ILogger<SpeckleProjectFileUploader>? logger = null)
 {
+  /// <summary>
+  /// 通过 bind-file REST 接口将本地 *.rvt 上传并绑定到指定版本。
+  /// </summary>
+  /// <param name="serverUrl">Speckle 服务端地址（<c>account.serverInfo.url</c>）。</param>
+  /// <param name="projectId">目标项目 ID。</param>
+  /// <param name="versionId">已存在的模型版本（Commit）ID。</param>
+  /// <param name="rvtAbsolutePath">磁盘上的 *.rvt 绝对路径（须已通过门禁校验可读）。</param>
+  /// <param name="normalizedProgress">可选；0～1，用于 DUI 条状进度映射。</param>
+  /// <param name="cancellationToken">用户取消时中止 HTTP 请求。</param>
+  /// <returns>简要成功文本。</returns>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1054:URI parameters should not be strings",
+    Justification = "Matches account.serverInfo.url string from Speckle credentials."
+  )]
+  public async Task<string> BindRvtFileAsync(
+    string serverUrl,
+    string accessToken,
+    string projectId,
+    string versionId,
+    string rvtAbsolutePath,
+    IProgress<double>? normalizedProgress,
+    CancellationToken cancellationToken
+  )
+  {
+    if (string.IsNullOrWhiteSpace(serverUrl))
+    {
+      throw new ArgumentException("Value cannot be empty.", nameof(serverUrl));
+    }
+
+    if (string.IsNullOrWhiteSpace(accessToken))
+    {
+      throw new ArgumentException("Value cannot be empty.", nameof(accessToken));
+    }
+
+    if (string.IsNullOrWhiteSpace(projectId))
+    {
+      throw new ArgumentException("Value cannot be empty.", nameof(projectId));
+    }
+
+    if (string.IsNullOrWhiteSpace(versionId))
+    {
+      throw new ArgumentException("Value cannot be empty.", nameof(versionId));
+    }
+
+    cancellationToken.ThrowIfCancellationRequested();
+
+    normalizedProgress?.Report(0);
+
+    var requestUri = new Uri(new Uri(serverUrl, UriKind.Absolute), $"api/v1/projects/{projectId}/versions/{versionId}/bind-file");
+    var fileName = Path.GetFileName(rvtAbsolutePath);
+
+    logger?.LogInformation(
+      "Speckle RVT bind-file: uploading {File} to version {VersionId}",
+      fileName,
+      versionId
+    );
+
+    using var content = new MultipartFormDataContent();
+    using var fileStream = File.OpenRead(rvtAbsolutePath);
+    var fileContent = new StreamContent(fileStream);
+    content.Add(fileContent, "file", fileName);
+
+    using var http = new HttpClient();
+    http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+    using var response = await http.PostAsync(requestUri, content, cancellationToken).ConfigureAwait(false);
+
+    if (!response.IsSuccessStatusCode)
+    {
+      var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+      throw new HttpRequestException(
+        $"bind-file failed with status {(int)response.StatusCode} ({response.StatusCode}): {body}"
+      );
+    }
+
+    normalizedProgress?.Report(1);
+    logger?.LogInformation(
+      "Speckle RVT bind-file: completed for version {VersionId}, file {File}",
+      versionId,
+      fileName
+    );
+
+    return "bind-file ok";
+  }
+
   /// <summary>Speckle 官方文件流水线：generateUploadUrl → PUT → startFileImport。</summary>
   /// <param name="client">已与账户绑定的 Speckle GraphQL/REST 客户端。</param>
   /// <param name="projectId">目标项目 ID。</param>
@@ -20,7 +105,7 @@ public sealed class SpeckleProjectFileUploader(ILogger<SpeckleProjectFileUploade
   /// <param name="normalizedProgress">可选；0～1，用于 DUI 条状进度映射。</param>
   /// <param name="cancellationToken">取消 PUT 循环与后续导入任务提交。</param>
   /// <returns>简要文本，形如 <c>fileId=...</c>。</returns>
-  public async Task<string> UploadRvtAsync(
+  public Task<string> UploadRvtAsync(
     IClient client,
     string projectId,
     string modelId,
@@ -29,6 +114,14 @@ public sealed class SpeckleProjectFileUploader(ILogger<SpeckleProjectFileUploade
     CancellationToken cancellationToken
   )
   {
+    _ = client;
+    _ = projectId;
+    _ = modelId;
+    _ = rvtAbsolutePath;
+    _ = normalizedProgress;
+    _ = cancellationToken;
+
+    /*
     if (string.IsNullOrWhiteSpace(projectId))
     {
       throw new ArgumentException("Value cannot be empty.", nameof(projectId));
@@ -96,5 +189,12 @@ public sealed class SpeckleProjectFileUploader(ILogger<SpeckleProjectFileUploade
     );
 
     return $"fileId={generated.fileId}";
+    */
+
+    return Task.FromException<string>(
+      new NotSupportedException(
+        "UploadRvtAsync is deprecated; use BindRvtFileAsync with the bind-file REST API."
+      )
+    );
   }
 }

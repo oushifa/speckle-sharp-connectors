@@ -8,6 +8,6 @@ public static class RevitMultiSendTaskIds
   /// <summary>几何与属性经 Speckle 常规 Send 流水线写入的版本（主车道）。</summary>
   public const string SPECKLE_MODEL = "speckleModel";
 
-  /// <summary>磁盘 *.rvt 经 Speckle FileImport（预签名 + PUT）上传并触发导入。</summary>
+  /// <summary>磁盘 *.rvt 经 bind-file REST 接口上传并绑定到已存在的版本。</summary>
   public const string SPECKLE_RVT_FILE = "speckleRvtFile";
 }
