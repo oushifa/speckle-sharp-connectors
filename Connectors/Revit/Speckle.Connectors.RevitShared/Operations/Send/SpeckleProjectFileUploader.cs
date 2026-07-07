@@ -70,7 +70,7 @@ public sealed class SpeckleProjectFileUploader(ILogger<SpeckleProjectFileUploade
     );
 
     using var content = new MultipartFormDataContent();
-    using var fileStream = File.OpenRead(rvtAbsolutePath);
+    using var fileStream = OpenRvtFileForRead(rvtAbsolutePath);
     var fileContent = new StreamContent(fileStream);
     content.Add(fileContent, "file", fileName);
 
@@ -95,6 +95,55 @@ public sealed class SpeckleProjectFileUploader(ILogger<SpeckleProjectFileUploade
     );
 
     return "bind-file ok";
+  }
+
+  /// <summary>
+  /// 打开待上传的 *.rvt。Revit 运行时原文件常被本进程或其它程序（如云同步）占用，
+  /// 故先以 <see cref="FileShare.ReadWrite"/> 尝试直读，失败则复制到临时目录再读。
+  /// </summary>
+  private static FileStream OpenRvtFileForRead(string rvtAbsolutePath)
+  {
+    try
+    {
+      return new FileStream(
+        rvtAbsolutePath,
+        FileMode.Open,
+        FileAccess.Read,
+        FileShare.ReadWrite,
+        bufferSize: 4096,
+        FileOptions.SequentialScan
+      );
+    }
+    catch (IOException)
+    {
+      var tempDir = Path.Combine(Path.GetTempPath(), "speckle-rvt-upload");
+      Directory.CreateDirectory(tempDir);
+      var tempPath = Path.Combine(tempDir, $"{Guid.NewGuid():N}_{Path.GetFileName(rvtAbsolutePath)}");
+
+      try
+      {
+        File.Copy(rvtAbsolutePath, tempPath, overwrite: true);
+        return new FileStream(
+          tempPath,
+          FileMode.Open,
+          FileAccess.Read,
+          FileShare.Read,
+          bufferSize: 4096,
+          FileOptions.DeleteOnClose | FileOptions.SequentialScan
+        );
+      }
+      catch (Exception copyEx)
+      {
+        throw new IOException(
+          $"无法读取 Revit 模型文件，可能被云同步、杀毒或其它程序占用：{rvtAbsolutePath}",
+          copyEx
+        );
+      }
+    }
+    catch (Exception ex) when (ex is not IOException)
+    {
+      throw new IOException($"无法读取 Revit 模型文件：{rvtAbsolutePath}", ex);
+    }
   }
 
   /// <summary>Speckle 官方文件流水线：generateUploadUrl → PUT → startFileImport。</summary>
