@@ -40,23 +40,28 @@ public sealed class SendOperation<T>(
     CancellationToken cancellationToken
   )
   {
-    bool useModelIngestionSend = await CheckUseModelIngestionSend(sendInfo);
-    if (useModelIngestionSend)
+    try
     {
-      return await SendViaIngestion(
-        objects,
-        sendInfo,
-        fileName,
-        fileSizeBytes,
-        versionMessage,
-        uiProgress,
-        cancellationToken
-      );
+      bool useModelIngestionSend = await CheckUseModelIngestionSend(sendInfo);
+      if (useModelIngestionSend)
+      {
+        return await SendViaIngestion(
+          objects,
+          sendInfo,
+          fileName,
+          fileSizeBytes,
+          versionMessage,
+          uiProgress,
+          cancellationToken
+        );
+      }
     }
-    else
+    catch (Exception)
     {
-      return await SendViaVersionCreate(objects, sendInfo, versionMessage, uiProgress, cancellationToken);
+      // 容错捕获：当 Ingestion 模块遭遇 GraphQL 权限或 API 不匹配错误时，自动降级为 VersionCreate
     }
+
+    return await SendViaVersionCreate(objects, sendInfo, versionMessage, uiProgress, cancellationToken);
   }
 
   private async Task<(SendOperationResult sendResult, string versionId)> SendViaIngestion(
@@ -231,9 +236,9 @@ public sealed class SendOperation<T>(
       );
       permissionCheck.EnsureAuthorised();
     }
-    catch (AggregateException ex) when (ex.InnerExceptions.OfType<SpeckleGraphQLInvalidQueryException>().Any())
+    catch (Exception)
     {
-      // CanCreateModelIngestion will throw this if the server is too old and doesn't support model ingestion API
+      // 当 Server 不支持 CanCreateModelIngestion 或查询报 GraphQL Error 时，降级使用传统 Version 发送通道
       useModelIngestionSend = false;
     }
 
