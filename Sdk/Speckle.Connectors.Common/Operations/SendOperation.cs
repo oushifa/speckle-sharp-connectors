@@ -30,6 +30,11 @@ public sealed class SendOperation<T>(
   IIngestionProgressManagerFactory ingestionProgressManagerFactory
 ) : ISendOperation<T>
 {
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1031:Do not catch general exception types",
+    Justification = "Fallback to legacy version creation when ingestion API fails or is unsupported"
+  )]
   public async Task<(SendOperationResult sendResult, string versionId)> Send(
     IReadOnlyList<T> objects,
     SendInfo sendInfo,
@@ -56,7 +61,7 @@ public sealed class SendOperation<T>(
         );
       }
     }
-    catch (Exception)
+    catch (Exception ex) when (!ex.IsFatal())
     {
       // 容错捕获：当 Ingestion 模块遭遇 GraphQL 权限或 API 不匹配错误时，自动降级为 VersionCreate
     }
@@ -225,6 +230,11 @@ public sealed class SendOperation<T>(
   /// <param name="sendInfo"></param>
   /// <returns><see langword="true"/> if we should use model ingestion based send functions, false</returns>
   /// <exception cref="WorkspacePermissionException">Thrown if the server supports model ingestion, but for other reasons we won't beable to create an ingestion</exception>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1031:Do not catch general exception types",
+    Justification = "Fallback to legacy version creation when ingestion API fails or is unsupported"
+  )]
   private static async Task<bool> CheckUseModelIngestionSend(SendInfo sendInfo)
   {
     bool useModelIngestionSend = true;
@@ -236,7 +246,7 @@ public sealed class SendOperation<T>(
       );
       permissionCheck.EnsureAuthorised();
     }
-    catch (Exception)
+    catch (Exception ex) when (!ex.IsFatal())
     {
       // 当 Server 不支持 CanCreateModelIngestion 或查询报 GraphQL Error 时，降级使用传统 Version 发送通道
       useModelIngestionSend = false;
