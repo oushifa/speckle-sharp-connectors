@@ -57,7 +57,11 @@ public class ParameterValueExtractor
       element,
       builtInParameter,
       StorageType.Double,
+#if REVIT2020
+      (parameter) => _scalingService.Scale(parameter.AsDouble(), parameter.DisplayUnitType)
+#else
       (parameter) => _scalingService.Scale(parameter.AsDouble(), parameter.GetUnitTypeId())
+#endif
     );
     if (number.HasValue)
     {
@@ -74,7 +78,11 @@ public class ParameterValueExtractor
     return GetValueGeneric<double?>(
       parameter,
       StorageType.Double,
+#if REVIT2020
+      (parameter) => _scalingService.Scale(parameter.AsDouble(), parameter.DisplayUnitType)
+#else
       (parameter) => _scalingService.Scale(parameter.AsDouble(), parameter.GetUnitTypeId())
+#endif
     );
   }
 

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseWpf>true</UseWpf>
+    <RevitVersion>2020</RevitVersion>
+    <DefineConstants>$(DefineConstants);REVIT2020</DefineConstants>
+    <Configurations>Debug;Release;Local</Configurations>
+  </PropertyGroup>
+
+  <Import Project="..\Speckle.Connectors.RevitShared\Speckle.Connectors.RevitShared.projitems" Label="Shared" />
+
+  <Import Project="..\Speckle.Connectors.RevitShared.Cef\Speckle.Connectors.RevitShared.Cef.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Converters\Revit\Speckle.Converters.Revit2020\Speckle.Converters.Revit2020.csproj" />
+    <ProjectReference Include="..\..\..\DUI3\Speckle.Connectors.DUI\Speckle.Connectors.DUI.csproj" />
+    <!--
+      Revit.Common references Speckle.Revit.API 2022 which would shadow the Revit 2020 API
+      (both assemblies share the simple name "RevitAPI", so the newer one wins and hides types
+      like UnitType that were removed in 2022). Exclude its transitive compile assets so the
+      connector resolves the Revit 2020 API coming from the converter reference instead.
+    -->
+    <ProjectReference
+      Include="..\Speckle.Connectors.Revit.Common\Speckle.Connectors.Revit.Common.csproj"
+      ExcludeAssets="compile"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Note: unlike Revit 2023+ we intentionally do NOT set IncludeAssets="compile" so the CefSharp
+      managed + native runtime files (libcef.dll, locales, ...) end up in the plugin output folder.
+      The Revit 2022 build (the only other fork-shipped net48 connector) relies on this too.
+    -->
+    <PackageReference Include="CefSharp.Wpf" NoWarn="NU1903" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Plugin\Speckle.Connectors.Revit2020.addin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

@@ -10,7 +10,8 @@ namespace Speckle.Connectors.Revit.Bindings;
 // POC: we need a base a RevitBaseBinding
 internal sealed class SelectionBinding : RevitBaseBinding, ISelectionBinding, IDisposable
 {
-#if REVIT2022
+#if REVIT2022 || REVIT2020
+  // NOTE: UIApplication.SelectionChanged only exists from Revit 2023 onwards; older versions poll.
   private readonly System.Timers.Timer _selectionTimer;
 #endif
   private readonly RevitContext _revitContext;
@@ -19,7 +20,7 @@ internal sealed class SelectionBinding : RevitBaseBinding, ISelectionBinding, ID
     RevitContext revitContext,
     IBrowserBridge parent,
     RevitIdleManager idleManager,
-#if REVIT2022
+#if REVIT2022 || REVIT2020
     ITopLevelExceptionHandler topLevelExceptionHandler,
 #endif
     IRevitTask revitTask,
@@ -31,7 +32,7 @@ internal sealed class SelectionBinding : RevitBaseBinding, ISelectionBinding, ID
 
     if (!configStore.GetConnectorConfig().SelectionChangeListeningDisabled)
     {
-#if REVIT2022
+#if REVIT2022 || REVIT2020
       // NOTE: getting the selection data should be a fast function all, even for '000s of elements - and having a timer hitting it every 1s is ok.
       _selectionTimer = new System.Timers.Timer(1000);
       _selectionTimer.Elapsed += (_, _) => topLevelExceptionHandler.CatchUnhandled(OnSelectionChanged);
@@ -77,7 +78,7 @@ internal sealed class SelectionBinding : RevitBaseBinding, ISelectionBinding, ID
 
   public void Dispose()
   {
-#if REVIT2022
+#if REVIT2022 || REVIT2020
     _selectionTimer.Dispose();
 #endif
   }

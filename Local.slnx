@@ -113,6 +113,10 @@
   <Folder Name="/Connectors/Revit/">
     <File Path="Connectors\Revit\Directory.Build.targets" />
   </Folder>
+  <Folder Name="/Connectors/Revit/2020/">
+    <Project Path="Connectors\Revit\Speckle.Connectors.Revit2020\Speckle.Connectors.Revit2020.csproj" />
+    <Project Path="Converters\Revit\Speckle.Converters.Revit2020\Speckle.Converters.Revit2020.csproj" />
+  </Folder>
   <Folder Name="/Connectors/Revit/2022/">
     <Project Path="Connectors\Revit\Speckle.Connectors.Revit2022\Speckle.Connectors.Revit2022.csproj" />
     <Project Path="Converters\Revit\Speckle.Converters.Revit2022\Speckle.Converters.Revit2022.csproj" />

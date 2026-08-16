@@ -57,7 +57,11 @@ public class LevelUnpacker
           properties = _propertiesExtractor.GetProperties(level)
         };
         var unitSettings = _converterSettings.Current.Document.GetUnits();
+#if REVIT2020
+        var lengthUnitType = unitSettings.GetFormatOptions(UnitType.UT_Length).DisplayUnits;
+#else
         var lengthUnitType = unitSettings.GetFormatOptions(SpecTypeId.Length).GetUnitTypeId();
+#endif
         levelDataObject["elevation"] = UnitUtils.ConvertFromInternalUnits(level.Elevation, lengthUnitType);
         levelDataObject["units"] = _converterSettings.Current.SpeckleUnits;
 

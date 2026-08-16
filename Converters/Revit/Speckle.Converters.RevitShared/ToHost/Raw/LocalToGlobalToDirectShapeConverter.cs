@@ -70,7 +70,9 @@ public class LocalToGlobalToDirectShapeConverter
         .FindDefinition(target.atomicObject.applicationId ?? target.atomicObject.id.NotNull());
       result.SetShape(def);
 
+#if !REVIT2020
       // add snapping references for meshes and curves
+      // (DirectShape.AddReferencePoint/AddReferenceCurve only exist from Revit 2022 onwards)
       foreach (var shape in def)
       {
         switch (shape)
@@ -86,6 +88,7 @@ public class LocalToGlobalToDirectShapeConverter
             break;
         }
       }
+#endif
 
       return result; // note fast exit here
     }

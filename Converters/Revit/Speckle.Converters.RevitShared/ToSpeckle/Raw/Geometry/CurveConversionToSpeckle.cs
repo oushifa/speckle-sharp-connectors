@@ -35,8 +35,16 @@ public class CurveConversionToSpeckle : ITypedConverter<DB.Curve, ICurve>
     return target switch
     {
       DB.Line line => _lineConverter.Convert(line),
+#if REVIT2020
+      // Revit 2020 has no Arc.IsClosed (added in 2021); a full-circle arc has coincident endpoints.
+      // POC: are maybe arc.IsCyclic ?
+      DB.Arc arc => arc.GetEndPoint(0).IsAlmostEqualTo(arc.GetEndPoint(1))
+        ? _circleConverter.Convert(arc)
+        : _arcConverter.Convert(arc),
+#else
       // POC: are maybe arc.IsCyclic ?
       DB.Arc arc => arc.IsClosed ? _circleConverter.Convert(arc) : _arcConverter.Convert(arc),
+#endif
       DB.Ellipse ellipse => _ellipseConverter.Convert(ellipse),
       DB.NurbSpline nurbs => _nurbsConverter.Convert(nurbs),
       DB.HermiteSpline hermite => _hermiteConverter.Convert(hermite),

@@ -1,0 +1,101 @@
+name: Build Revit 2020 setup.exe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.4xx
+
+      - name: Build Revit 2020 (Release)
+        shell: pwsh
+        run: |
+          dotnet build "Connectors\Revit\Speckle.Connectors.Revit2020\Speckle.Connectors.Revit2020.csproj" -c Release
+
+      - name: Stage files for installer
+        shell: pwsh
+        run: |
+          $buildOut = Join-Path $env:GITHUB_WORKSPACE "Connectors\Revit\Speckle.Connectors.Revit2020\bin\Release\net48"
+          if (!(Test-Path $buildOut)) { throw "Build output not found: $buildOut" }
+
+          $stageRoot = Join-Path $env:GITHUB_WORKSPACE "installer\stage\Addins2020"
+          $destFolder = Join-Path $stageRoot "Speckle.Connectors.Revit2020"
+
+          New-Item -ItemType Directory -Force -Path $destFolder | Out-Null
+
+          Copy-Item -Recurse -Force (Join-Path $buildOut "*") $destFolder
+
+          $addinSource = Join-Path $buildOut "Plugin\Speckle.Connectors.Revit2020.addin"
+          if (!(Test-Path $addinSource)) { throw "Addin file not found: $addinSource" }
+
+          Copy-Item -Force $addinSource (Join-Path $stageRoot "Speckle.Connectors.Revit2020.addin")
+
+          $pluginDir = Join-Path $destFolder "Plugin"
+          if (Test-Path $pluginDir) { Remove-Item -Recurse -Force $pluginDir }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+
+      - name: Build setup.exe
+        shell: pwsh
+        run: |
+          $chocoProfile = Join-Path $env:ChocolateyInstall "helpers\chocolateyProfile.psm1"
+          if (Test-Path $chocoProfile) { Import-Module $chocoProfile; refreshenv }
+
+          $iscc =
+            (Get-Command "ISCC.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source)
+
+          if (!$iscc) {
+            $candidates = @(
+              "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
+              "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+              "$env:ChocolateyInstall\bin\ISCC.exe",
+              "$env:ChocolateyInstall\lib\innosetup\tools\ISCC.exe"
+            )
+
+            foreach ($candidate in $candidates) {
+              if (Test-Path $candidate) {
+                $iscc = $candidate
+                break
+              }
+            }
+          }
+
+          if (!$iscc) {
+            $searchRoots = @()
+            $pf86 = ${env:ProgramFiles(x86)}
+            if ($pf86) { $searchRoots += $pf86 }
+            if ($env:ProgramFiles) { $searchRoots += $env:ProgramFiles }
+            if ($env:ChocolateyInstall) { $searchRoots += $env:ChocolateyInstall }
+
+            $iscc =
+              (Get-ChildItem -Path $searchRoots -Filter "ISCC.exe" -Recurse -ErrorAction SilentlyContinue |
+                Select-Object -First 1 -ExpandProperty FullName)
+          }
+
+          if (!$iscc) { throw "ISCC.exe not found after installing Inno Setup." }
+          Write-Host "Using ISCC: $iscc"
+
+          $version = "0.0.${{ github.run_number }}"
+          $sourceRoot = Join-Path $env:GITHUB_WORKSPACE "installer\stage\Addins2020"
+          $outputDir = Join-Path $env:GITHUB_WORKSPACE "installer\out"
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+          & $iscc "Build\setup\revit2020.iss" /O"$outputDir" /F"Speckle-Revit2020-Setup-$version" /DMyAppVersion="$version" /DSourceRoot="$sourceRoot"
+
+      - name: Upload setup.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: revit2020-setup
+          path: installer/out/*.exe
+          if-no-files-found: error

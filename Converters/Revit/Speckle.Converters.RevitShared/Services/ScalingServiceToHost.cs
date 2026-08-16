@@ -15,6 +15,28 @@ public sealed class ScalingServiceToHost
     return ScaleToNative(value, UnitsToNative(units));
   }
 
+#if REVIT2020
+  public double ScaleToNative(double value, DisplayUnitType displayUnitType)
+  {
+    return UnitUtils.ConvertToInternalUnits(value, displayUnitType);
+  }
+
+  /// <exception cref="UnitNotSupportedException">Throws if unit is not supported</exception>
+  public DisplayUnitType UnitsToNative(string units)
+  {
+    var u = Sdk.Common.Units.GetUnitsFromString(units);
+
+    return u switch
+    {
+      Sdk.Common.Units.Millimeters => DisplayUnitType.DUT_MILLIMETERS,
+      Sdk.Common.Units.Centimeters => DisplayUnitType.DUT_CENTIMETERS,
+      Sdk.Common.Units.Meters => DisplayUnitType.DUT_METERS,
+      Sdk.Common.Units.Inches => DisplayUnitType.DUT_DECIMAL_INCHES,
+      Sdk.Common.Units.Feet => DisplayUnitType.DUT_DECIMAL_FEET,
+      _ => throw new UnitNotSupportedException($"The Unit System \"{units}\" is unsupported."),
+    };
+  }
+#else
   public double ScaleToNative(double value, ForgeTypeId typeId)
   {
     return UnitUtils.ConvertToInternalUnits(value, typeId);
@@ -35,4 +57,5 @@ public sealed class ScalingServiceToHost
       _ => throw new UnitNotSupportedException($"The Unit System \"{units}\" is unsupported."),
     };
   }
+#endif
 }

@@ -24,10 +24,20 @@ public sealed class ScalingServiceToSpeckle : IScalingServiceToSpeckle
   // model settings (not linked models), hence the explicit GetMainDocumentScalingFactor in RevitContext
   public double ScaleLength(double length) => length * _defaultLengthConversionFactor;
 
+#if REVIT2020
+  // Revit 2020 has no ForgeTypeId; unit conversion is done via DisplayUnitType.
+  // POC: not sure about this???
+  public double Scale(double value, DisplayUnitType displayUnitType) => ScaleStatic(value, displayUnitType);
+
+  // POC: not sure why this is needed???
+  private static double ScaleStatic(double value, DisplayUnitType displayUnitType) =>
+    UnitUtils.ConvertFromInternalUnits(value, displayUnitType);
+#else
   // POC: not sure about this???
   public double Scale(double value, ForgeTypeId forgeTypeId) => ScaleStatic(value, forgeTypeId);
 
   // POC: not sure why this is needed???
   private static double ScaleStatic(double value, ForgeTypeId forgeTypeId) =>
     UnitUtils.ConvertFromInternalUnits(value, forgeTypeId);
+#endif
 }

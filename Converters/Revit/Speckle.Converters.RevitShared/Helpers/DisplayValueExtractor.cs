@@ -722,6 +722,16 @@ public sealed class DisplayValueExtractor
         }
       }
       curves.AddRange(
+#if REVIT2020
+        // Revit 2020 only exposes GetCenterlineCurves (GetTransformedCenterlineCurves added in 2021).
+        rebar.GetCenterlineCurves(
+          false,
+          false,
+          false,
+          DB.Structure.MultiplanarOption.IncludeAllMultiplanarCurves,
+          barPositionIndex
+        )
+#else
         rebar.GetTransformedCenterlineCurves(
           false,
           false,
@@ -729,6 +739,7 @@ public sealed class DisplayValueExtractor
           DB.Structure.MultiplanarOption.IncludeAllMultiplanarCurves,
           barPositionIndex
         )
+#endif
       );
     }
 

@@ -128,7 +128,12 @@ public class MeshConverterToHost : ITypedConverter<SOG.Mesh, List<DB.GeometryObj
     }
 
     XYZ[] points = new XYZ[arr.Count / 3];
+#if REVIT2020
+    // DisplayUnitType is a struct in Revit 2020, so there is no null fallback needed.
+    var fTypeId = _scalingServiceToHost.UnitsToNative(units);
+#else
     var fTypeId = _scalingServiceToHost.UnitsToNative(units) ?? UnitTypeId.Meters;
+#endif
 
     for (int i = 2, k = 0; i < arr.Count; i += 3)
     {

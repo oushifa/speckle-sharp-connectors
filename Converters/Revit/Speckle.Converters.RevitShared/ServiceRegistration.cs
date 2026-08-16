@@ -23,7 +23,11 @@ public static class ServiceRegistration
     serviceCollection.AddRootCommon<RevitRootToSpeckleConverter>(converterAssembly);
 
     // register all application converters
+#if REVIT2020
+    serviceCollection.AddApplicationConverters<RevitToSpeckleUnitConverter, DB.DisplayUnitType>(converterAssembly);
+#else
     serviceCollection.AddApplicationConverters<RevitToSpeckleUnitConverter, DB.ForgeTypeId>(converterAssembly);
+#endif
 
     serviceCollection.AddScoped<IRootToHostConverter, RevitRootToHostConverter>();
     serviceCollection.AddSingleton(new RevitContext());

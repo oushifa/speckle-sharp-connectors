@@ -36,8 +36,13 @@ public class RevitContext
       ?? throw new SpeckleException("Unable to retrieve active UI document");
 
     DB.Units documentUnits = mainModelDoc.GetUnits();
+#if REVIT2020
+    FormatOptions formatOptions = documentUnits.GetFormatOptions(UnitType.UT_Length);
+    var lengthUnitsTypeId = formatOptions.DisplayUnits;
+#else
     FormatOptions formatOptions = documentUnits.GetFormatOptions(SpecTypeId.Length);
     var lengthUnitsTypeId = formatOptions.GetUnitTypeId();
+#endif
 
     return UnitUtils.ConvertFromInternalUnits(1, lengthUnitsTypeId);
   }

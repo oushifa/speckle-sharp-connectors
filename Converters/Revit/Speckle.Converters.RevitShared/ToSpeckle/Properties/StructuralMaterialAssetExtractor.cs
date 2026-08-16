@@ -9,18 +9,33 @@ namespace Speckle.Converters.RevitShared.ToSpeckle.Properties;
 public readonly struct StructuralAssetProperties(
   string name,
   double density,
+#if REVIT2020
+  DB.DisplayUnitType densityUnitId,
+#else
   DB.ForgeTypeId densityUnitId,
+#endif
   string materialType,
   double? compressiveStrength,
+#if REVIT2020
+  DB.DisplayUnitType? compressiveStrengthUnitId
+#else
   DB.ForgeTypeId? compressiveStrengthUnitId
+#endif
 )
 {
   public string Name { get; } = name;
   public double Density { get; } = density;
+#if REVIT2020
+  public DB.DisplayUnitType DensityUnitId { get; } = densityUnitId;
+  public string MaterialType { get; } = materialType;
+  public double? CompressiveStrength { get; } = compressiveStrength;
+  public DB.DisplayUnitType? CompressiveStrengthUnitId { get; } = compressiveStrengthUnitId;
+#else
   public DB.ForgeTypeId DensityUnitId { get; } = densityUnitId;
   public string MaterialType { get; } = materialType;
   public double? CompressiveStrength { get; } = compressiveStrength;
   public DB.ForgeTypeId? CompressiveStrengthUnitId { get; } = compressiveStrengthUnitId;
+#endif
 }
 
 public class StructuralMaterialAssetExtractor
@@ -77,10 +92,17 @@ public class StructuralMaterialAssetExtractor
     DB.StructuralAsset structuralAsset = propertySetElement.GetStructuralAsset();
 
     // get unit forge type id
+#if REVIT2020
+    DB.DisplayUnitType densityUnitId = _converterSettings
+      .Current.Document.GetUnits()
+      .GetFormatOptions(DB.UnitType.UT_MassDensity)
+      .DisplayUnits;
+#else
     DB.ForgeTypeId densityUnitId = _converterSettings
       .Current.Document.GetUnits()
       .GetFormatOptions(DB.SpecTypeId.MassDensity)
       .GetUnitTypeId();
+#endif
 
     // scale from internal to model units
     double densityValue = _scalingService.Scale(structuralAsset.Density, densityUnitId);
@@ -90,17 +112,33 @@ public class StructuralMaterialAssetExtractor
 
     // initialize optional concrete properties
     double? compressiveStrength = null;
+#if REVIT2020
+    DB.DisplayUnitType? stressUnitId = null;
+#else
     DB.ForgeTypeId? stressUnitId = null;
+#endif
 
     // if concrete, extract compressive strength
     if (materialType == DB.StructuralAssetClass.Concrete.ToString())
     {
+#if REVIT2020
+      stressUnitId = _converterSettings
+        .Current.Document.GetUnits()
+        .GetFormatOptions(DB.UnitType.UT_Stress)
+        .DisplayUnits;
+#else
       stressUnitId = _converterSettings
         .Current.Document.GetUnits()
         .GetFormatOptions(DB.SpecTypeId.AreaForce)
         .GetUnitTypeId();
+#endif
 
+#if REVIT2020
+      // stressUnitId is guaranteed to be set within this block, so .Value is safe.
+      compressiveStrength = _scalingService.Scale(structuralAsset.ConcreteCompression, stressUnitId.Value);
+#else
       compressiveStrength = _scalingService.Scale(structuralAsset.ConcreteCompression, stressUnitId);
+#endif
     }
 
     // return value and units

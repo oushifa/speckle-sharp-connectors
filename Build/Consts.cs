@@ -1,4 +1,4 @@
-﻿namespace Build;
+namespace Build;
 
 public static class Consts
 {
@@ -16,6 +16,7 @@ public static class Consts
     new(
       "revit",
       [
+        new("Connectors/Revit/Speckle.Connectors.Revit2020", "net48"),
         new("Connectors/Revit/Speckle.Connectors.Revit2022", "net48"),
         new("Connectors/Revit/Speckle.Connectors.Revit2023", "net48"),
         new("Connectors/Revit/Speckle.Connectors.Revit2024", "net48"),

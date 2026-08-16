@@ -22,13 +22,13 @@ This repo is the home of our next-generation Speckle .NET projects:
 - **Speckle Connectors**
   - [`Autocad Connector`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Connectors/Autocad): for Autodesk AutoCAD and Civil3D 2022+
   - [`Rhino Connector`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Connectors/Rhino): for McNeel Rhino 7+
-  - [`Revit Connector`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Connectors/Revit): for Autodesk Revit 2022+
+  - [`Revit Connector`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Connectors/Revit): for Autodesk Revit 2020+
   - [`Tekla Connector`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Connectors/Tekla): for Trimble Tekla 2024
 - **Speckle Converters**
   - [`Autocad Converter`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Converters/Autocad): for Autodesk AutoCAD 2022+
   - [`Civil3d Converter`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Converters/Civil3d): for Autodesk Civil3D 2022+
   - [`Rhino Converter`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Converters/Rhino): for McNeel Rhino 7+
-  - [`Revit Converter`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Converters/Revit): for Autodesk Revit 2023+
+  - [`Revit Converter`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Converters/Revit): for Autodesk Revit 2020+
   - [`Tekla Converter`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Converters/Tekla/Speckle.Converter.Tekla2024): for Trimble Tekla 2024
 - **SDK**
   - [`SDK`](https://github.com/specklesystems/speckle-sharp-connectors/tree/main/Sdk): Autofac module, connector utilities, and dependency injection.

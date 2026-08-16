@@ -77,7 +77,12 @@ internal sealed class BasicConnectorBindingRevit : IBasicConnectorBinding
       doc.PathName,
       doc.Title,
       doc.GetHashCode().ToString(),
+#if REVIT2020
+      // Document.GetCloudModelUrn()/CloudModelGUID only exist from Revit 2023 onwards; derive the id from the cloud model path.
+      doc.IsModelInCloud ? doc.GetCloudModelPath().GetModelGUID().ToString() : null
+#else
       doc.IsModelInCloud ? doc.GetCloudModelUrn() : null
+#endif
     );
 
     return info;

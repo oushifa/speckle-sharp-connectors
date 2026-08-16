@@ -401,6 +401,20 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
   private bool HaveUnitsChanged(Document doc)
   {
     var docId = doc.Title + doc.PathName;
+#if REVIT2020
+    var unitTypes = new List<UnitType>() // list of units we care about
+    {
+      UnitType.UT_Angle,
+      UnitType.UT_Area,
+      UnitType.UT_Length,
+      UnitType.UT_Volume
+    };
+    var units = "";
+    foreach (var unitType in unitTypes)
+    {
+      units += doc.GetUnits().GetFormatOptions(unitType).DisplayUnits.ToString();
+    }
+#else
     var unitSpecTypeIds = new List<ForgeTypeId>() // list of units we care about
     {
       SpecTypeId.Angle,
@@ -414,6 +428,7 @@ internal sealed class RevitSendBinding : RevitBaseBinding, ISendBinding
     {
       units += doc.GetUnits().GetFormatOptions(typeId).GetUnitTypeId().TypeId;
     }
+#endif
 
     if (_docUnitCache.TryGetValue(docId, out string? value))
     {

@@ -94,7 +94,11 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
         try
         {
           // add area and volume props
+#if REVIT2020
+          var areaUnitType = unitSettings.GetFormatOptions(DB.UnitType.UT_Area).DisplayUnits;
+#else
           var areaUnitType = unitSettings.GetFormatOptions(DB.SpecTypeId.Area).GetUnitTypeId();
+#endif
           AddMaterialProperty(
             materialQuantity,
             "area",
@@ -102,7 +106,11 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
             areaUnitType
           );
 
+#if REVIT2020
+          var volumeUnitType = unitSettings.GetFormatOptions(DB.UnitType.UT_Volume).DisplayUnits;
+#else
           var volumeUnitType = unitSettings.GetFormatOptions(DB.SpecTypeId.Volume).GetUnitTypeId();
+#endif
           AddMaterialProperty(
             materialQuantity,
             "volume",
@@ -134,7 +142,11 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
         foreach (DB.Parameter param in elementType.Parameters)
         {
           DB.Definition def = param.Definition;
+#if REVIT2020
+          if (param.StorageType == DB.StorageType.ElementId && def.ParameterType == DB.ParameterType.Material)
+#else
           if (param.StorageType == DB.StorageType.ElementId && def.GetDataType() == DB.SpecTypeId.Reference.Material)
+#endif
           {
             elementMatId = param.AsElementId();
             break;
@@ -147,8 +159,13 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
           foreach (DB.Parameter eParam in element.Parameters)
           {
             DB.Definition eParamDef = eParam.Definition;
+#if REVIT2020
+            var parameterType = eParamDef.ParameterType;
+            if (parameterType == DB.ParameterType.Length)
+#else
             var forgeTypeId = eParamDef.GetDataType();
             if (forgeTypeId == DB.SpecTypeId.Length)
+#endif
             {
               double length = eParam.AsDouble();
               if (matLengths.TryGetValue(elementMatId, out double _))
@@ -176,7 +193,11 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
         quantities[matName] = materialQuantity;
 
         // add length prop
+#if REVIT2020
+        var lengthUnitType = unitSettings.GetFormatOptions(DB.UnitType.UT_Length).DisplayUnits;
+#else
         var lengthUnitType = unitSettings.GetFormatOptions(DB.SpecTypeId.Length).GetUnitTypeId();
+#endif
         AddMaterialProperty(
           materialQuantity,
           "length",
@@ -237,7 +258,12 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
             materialQuantity,
             "compressiveStrength",
             structuralAssetProperties.CompressiveStrength.Value,
+#if REVIT2020
+            // CompressiveStrengthUnitId is a nullable struct in Revit 2020; .HasValue is guaranteed by the guard above.
+            structuralAssetProperties.CompressiveStrengthUnitId!.Value
+#else
             structuralAssetProperties.CompressiveStrengthUnitId!
+#endif
           );
         }
       }
@@ -249,6 +275,32 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
     return false;
   }
 
+#if REVIT2020
+  /// <summary>
+  /// Adds a material property to the given dictionary with standardized structure.
+  /// </summary>
+  /// <param name="materialQuantity">The dictionary to mutate with the new property</param>
+  /// <param name="name">The name of the property (e.g., "area", "volume", "density")</param>
+  /// <param name="value">The numeric value of the property</param>
+  /// <param name="unitId">The display unit type representing the units of the property</param>
+  /// <remarks>
+  /// Saves code when used repeatedly. Etabs implements an extension method to dicts (see utils folder). May be worth exploring.
+  /// </remarks>
+  private void AddMaterialProperty(
+    Dictionary<string, object> materialQuantity,
+    string name,
+    double value,
+    DB.DisplayUnitType unitId
+  )
+  {
+    materialQuantity[name] = new Dictionary<string, object>
+    {
+      ["name"] = name,
+      ["value"] = value,
+      ["units"] = DB.LabelUtils.GetLabelFor(unitId)
+    };
+  }
+#else
   /// <summary>
   /// Adds a material property to the given dictionary with standardized structure.
   /// </summary>
@@ -273,4 +325,5 @@ public class MaterialQuantitiesToSpeckleLite : ITypedConverter<DB.Element, Dicti
       ["units"] = DB.LabelUtils.GetLabelForUnit(unitId)
     };
   }
+#endif
 }

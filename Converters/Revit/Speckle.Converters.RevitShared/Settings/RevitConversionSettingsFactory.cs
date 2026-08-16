@@ -8,7 +8,11 @@ namespace Speckle.Converters.RevitShared.Settings;
 [GenerateAutoInterface]
 public class RevitConversionSettingsFactory(
   RevitContext revitContext,
+#if REVIT2020
+  IHostToSpeckleUnitConverter<DB.DisplayUnitType> unitConverter
+#else
   IHostToSpeckleUnitConverter<DB.ForgeTypeId> unitConverter
+#endif
 ) : IRevitConversionSettingsFactory
 {
   public RevitConversionSettings Create(
@@ -26,7 +30,11 @@ public class RevitConversionSettingsFactory(
       document,
       detailLevelType,
       referencePointTransform,
+#if REVIT2020
+      unitConverter.ConvertOrThrow(document.GetUnits().GetFormatOptions(DB.UnitType.UT_Length).DisplayUnits),
+#else
       unitConverter.ConvertOrThrow(document.GetUnits().GetFormatOptions(DB.SpecTypeId.Length).GetUnitTypeId()),
+#endif
       sendEmptyOrNullParams,
       sendLinkedModels,
       sendRebarsAsVolumetric,

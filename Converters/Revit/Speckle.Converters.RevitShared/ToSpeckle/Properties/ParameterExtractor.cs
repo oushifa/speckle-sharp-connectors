@@ -248,7 +248,11 @@ public class ParameterExtractor
     switch (parameter.StorageType)
     {
       case DB.StorageType.Double:
+#if REVIT2020
+        return _scalingServiceToSpeckle.Scale(parameter.AsDouble(), parameter.DisplayUnitType);
+#else
         return _scalingServiceToSpeckle.Scale(parameter.AsDouble(), parameter.GetUnitTypeId());
+#endif
       case DB.StorageType.Integer:
         var integer = parameter.AsInteger();
         var valueString = parameter.AsValueString();
