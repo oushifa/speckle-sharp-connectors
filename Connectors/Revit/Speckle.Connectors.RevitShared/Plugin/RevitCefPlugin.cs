@@ -18,6 +18,46 @@ namespace Speckle.Connectors.Revit.Plugin;
 
 internal sealed class RevitCefPlugin : IRevitPlugin
 {
+#if REVIT2020
+  /// <summary>
+  /// Initializes CEF with settings that are safe inside the Revit 2020 process.
+  /// </summary>
+  /// <remarks>
+  /// CefSharp's <see cref="CefSharp.Wpf.ChromiumWebBrowser"/> auto-initializes CEF with default settings when
+  /// the first browser is created. Those defaults enable GPU acceleration (and the Chromium sandbox), which is a
+  /// common cause of the Revit process crashing natively on load with an "unhandled exception" dialog (the crash
+  /// surfaces as a fatal error that bypasses managed try/catch). We therefore initialize CEF explicitly — before
+  /// any browser is constructed — disabling GPU features and the sandbox, and writing a CEF log for diagnostics.
+  /// </remarks>
+  public static void InitializeCef()
+  {
+    if (Cef.IsInitialized)
+    {
+      return;
+    }
+
+    string logPath = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+      "Speckle",
+      "Logs",
+      "cef-revit2020.log"
+    );
+    Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+
+    // Note: for .NET Framework targets CefSharp exposes the settings class as CefSharp.Wpf.CefSettings
+    // (CefSharp.CefSettings only exists in the netcoreapp3.0 build of CefSharp.Common).
+    var settings = new CefSharp.Wpf.CefSettings { LogFile = logPath, LogSeverity = LogSeverity.Info };
+    settings.CefCommandLineArgs["disable-gpu"] = "1";
+    settings.CefCommandLineArgs["disable-gpu-compositing"] = "1";
+    settings.CefCommandLineArgs["no-sandbox"] = "1";
+
+    if (!Cef.Initialize(settings, performDependencyCheck: false, browserProcessHandler: null))
+    {
+      throw new InvalidOperationException("Failed to initialize CEF for the Revit 2020 connector.");
+    }
+  }
+#endif
+
   private readonly UIControlledApplication _uIControlledApplication;
   private readonly IServiceProvider _serviceProvider; // should be lazy to ensure the bindings are not created too early
   private readonly BindingOptions _bindingOptions;

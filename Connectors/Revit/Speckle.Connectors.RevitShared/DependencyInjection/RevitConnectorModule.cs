@@ -97,6 +97,12 @@ public static class ServiceRegistration
     // different versions for different versions of CEF
     serviceCollection.AddSingleton(BindingOptions.DefaultBinder);
 
+#if REVIT2020
+    // Initialize CEF with Revit-2020-safe settings before the first ChromiumWebBrowser is constructed
+    // (the browser auto-initializes CEF with defaults otherwise, which can crash the Revit process).
+    RevitCefPlugin.InitializeCef();
+#endif
+
     var panel = new CefSharpPanel();
     panel.Browser.JavascriptObjectRepository.NameConverter = null;
 
