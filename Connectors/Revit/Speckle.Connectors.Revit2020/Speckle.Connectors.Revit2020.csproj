@@ -2,11 +2,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <PlatformTarget>x64</PlatformTarget>
     <UseWpf>true</UseWpf>
     <RevitVersion>2020</RevitVersion>
     <DefineConstants>$(DefineConstants);REVIT2020</DefineConstants>
     <Configurations>Debug;Release;Local</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Things needed to get ancient cef buildling with modern msbuild">
+    <!--There is a weird bug or misconfiguration in cef 65.0.1 nuget that makes it pick x86 dlls if asked to build x64.-->
+    <!--Asking it to build AnyCPU appaers to work, but generates MSB3270 warnings, which we are ignoring here-->
+    <!--Official docs suggest setting the entire solution to x64, which we can't do, and we don't want to create a new SLN just for Revit 2020-->
+    <CefSharpAnyCpuSupport>true</CefSharpAnyCpuSupport>
+    <Prefer32bit>false</Prefer32bit>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
 
   <Import Project="..\Speckle.Connectors.RevitShared\Speckle.Connectors.RevitShared.projitems" Label="Shared" />
@@ -41,11 +49,14 @@
 
   <ItemGroup>
     <!--
-      Note: unlike Revit 2023+ we intentionally do NOT set IncludeAssets="compile" so the CefSharp
-      managed + native runtime files (libcef.dll, locales, ...) end up in the plugin output folder.
-      The Revit 2022 build (the only other fork-shipped net48 connector) relies on this too.
+      CefSharp 65 (same as the fork's Revit 2022 build, era-appropriate for Revit 2020):
+      - built with the VS2017 toolchain, so it loads with the VC++ 2015-2017 runtime present on
+      Revit 2020 machines (CefSharp 92 needs the VS2019 runtime -> FileLoadException on load);
+      - same CEF generation as the Chinese addins (建模大师 etc.) that already initialize CEF
+      in the Revit process, so both can coexist;
+      - full assets so the native files (libcef.dll, locales, ...) land in the plugin output.
     -->
-    <PackageReference Include="CefSharp.Wpf" NoWarn="NU1903" />
+    <PackageReference Include="CefSharp.Wpf" NoWarn="NU1903, NU1902" VersionOverride="65.0.1" />
   </ItemGroup>
 
   <ItemGroup>

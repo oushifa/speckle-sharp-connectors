@@ -87,8 +87,13 @@ public static class ServiceRegistration
 
   public static void RegisterUiDependencies(IServiceCollection serviceCollection)
   {
-#if REVIT2022
-    //different versons for different versions of CEF
+#if REVIT2020
+    // Initialize CEF with Revit-2020-safe settings before any ChromiumWebBrowser is constructed
+    // (the browser would otherwise auto-initialize CEF with defaults, see RevitCefPlugin.InitializeCef).
+    RevitCefPlugin.InitializeCef();
+#endif
+#if REVIT2022 || REVIT2020
+    //different versons for different versions of CEF (Revit 2020 uses the same CefSharp 65 as 2022)
     serviceCollection.AddSingleton(new BindingOptions() { CamelCaseJavascriptNames = false });
     serviceCollection.AddSingleton<CefSharpPanel>();
     serviceCollection.AddSingleton<IBrowserScriptExecutor>(sp => sp.GetRequiredService<CefSharpPanel>());
@@ -96,12 +101,6 @@ public static class ServiceRegistration
 #elif !REVIT2026_OR_GREATER
     // different versions for different versions of CEF
     serviceCollection.AddSingleton(BindingOptions.DefaultBinder);
-
-#if REVIT2020
-    // Initialize CEF with Revit-2020-safe settings before the first ChromiumWebBrowser is constructed
-    // (the browser auto-initializes CEF with defaults otherwise, which can crash the Revit process).
-    RevitCefPlugin.InitializeCef();
-#endif
 
     var panel = new CefSharpPanel();
     panel.Browser.JavascriptObjectRepository.NameConverter = null;

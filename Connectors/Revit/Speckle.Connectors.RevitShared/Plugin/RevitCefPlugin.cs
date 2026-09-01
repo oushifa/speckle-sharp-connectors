@@ -44,14 +44,13 @@ internal sealed class RevitCefPlugin : IRevitPlugin
     );
     Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
 
-    // Note: for .NET Framework targets CefSharp exposes the settings class as CefSharp.Wpf.CefSettings
-    // (CefSharp.CefSettings only exists in the netcoreapp3.0 build of CefSharp.Common).
-    var settings = new CefSharp.Wpf.CefSettings { LogFile = logPath, LogSeverity = LogSeverity.Info };
+    // CefSharp 65 exposes CefSettings in the CefSharp namespace (defined in CefSharp.Core.dll).
+    var settings = new CefSettings { LogFile = logPath, LogSeverity = LogSeverity.Info };
     settings.CefCommandLineArgs["disable-gpu"] = "1";
     settings.CefCommandLineArgs["disable-gpu-compositing"] = "1";
     settings.CefCommandLineArgs["no-sandbox"] = "1";
 
-    if (!Cef.Initialize(settings, performDependencyCheck: false, browserProcessHandler: null))
+    if (!Cef.Initialize(settings, false, null))
     {
       throw new InvalidOperationException("Failed to initialize CEF for the Revit 2020 connector.");
     }
