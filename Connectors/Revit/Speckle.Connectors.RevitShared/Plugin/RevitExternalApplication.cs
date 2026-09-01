@@ -1,3 +1,4 @@
+using System.IO;
 using Autodesk.Revit.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -65,11 +66,37 @@ internal sealed class RevitExternalApplication : IExternalApplication
         ?.GetRequiredService<ILoggerFactory>()
         .CreateLogger<RevitExternalApplication>()
         .LogCritical(e, "Unhandled exception");
+      TryDumpStartupError(e);
       // POC: feedback?
       return Result.Failed;
     }
 
     return Result.Succeeded;
+  }
+
+  /// <summary>
+  /// Fail-safe diagnostic dump: writes the startup exception to a plain-text file so we can find it even
+  /// when the logging pipeline itself failed to initialize (Revit's journal only records a bare API_ERROR).
+  /// </summary>
+  private static void TryDumpStartupError(Exception exception)
+  {
+    try
+    {
+      string logDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "Speckle",
+        "Logs"
+      );
+      Directory.CreateDirectory(logDir);
+      File.WriteAllText(
+        Path.Combine(logDir, "revit-startup-error.log"),
+        $"{DateTime.Now:O}{Environment.NewLine}{exception}{Environment.NewLine}"
+      );
+    }
+    catch (Exception e) when (!e.IsFatal())
+    {
+      // best effort - never let diagnostics break startup/shutdown
+    }
   }
 
   public Result OnShutdown(UIControlledApplication application)
