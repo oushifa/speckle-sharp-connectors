@@ -10,6 +10,10 @@ AppId={{7503E9BC-4242-4EE5-A409-0EEBAFA1F5F0}
 AppName=Speckle Revit 2020 Connector
 AppVersion={#MyAppVersion}
 DefaultDirName={userappdata}\Autodesk\Revit\Addins\2020
+; Install per-user WITHOUT UAC elevation. Otherwise {userappdata} resolves to the
+; elevated (admin) account's profile and Revit (running as the normal user) never
+; sees the addin - "installed but no menu / no logs".
+PrivilegesRequired=lowest
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 UninstallDisplayName=Speckle Revit 2020 Connector

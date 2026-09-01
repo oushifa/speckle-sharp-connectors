@@ -99,3 +99,12 @@ jobs:
           name: revit2020-setup
           path: installer/out/*.exe
           if-no-files-found: error
+
+      # Convenience artifact for manual deployment: the raw addin + plugin folder,
+      # ready to copy into %AppData%\Autodesk\Revit\Addins\2020\.
+      - name: Upload plugin folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: revit2020-plugin
+          path: installer/stage/Addins2020/**
+          if-no-files-found: error
