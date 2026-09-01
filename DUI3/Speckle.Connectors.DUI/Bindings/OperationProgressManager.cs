@@ -102,7 +102,7 @@ public class OperationProgressManager : IOperationProgressManager
 
     // 后续上报：在时间窗口内若状态文案未变则丢弃（减轻 Web 侧压力）。
     var currentTime = DateTime.Now;
-    var elapsedMs = (currentTime - t.Item1).Milliseconds;
+    var elapsedMs = (currentTime - t.Item1).TotalMilliseconds;
 
     if (elapsedMs < THROTTLE_INTERVAL_MS && t.Item2 == progress.Status)
     {
